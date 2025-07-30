@@ -18,74 +18,69 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define KEYS_FILE "keys.txt"
 Sd2Card card;
 
-void printTextToDisplay(const String &text, const int fontSize) {
-  display.setTextSize(fontSize);
-  display.clearDisplay();
-  display.setCursor(0, 0);
-  display.println(text);
-  display.display();
-  delay(1000);
-  Serial.println("Display: " + text);
-}
-
+void printTextToDisplay(const String &text, const int fontSize);
+bool allExpectedFilesExist();
 
 void fatalError(const String &message) {
   printTextToDisplay("Fatal Error: " + message, 2);
-  while (true) {
-    // Loop indefinitely to halt execution
-  }
+  for(;;); // Loop indefinitely to halt execution
 }
+
 void initDisplay() {
   Serial.println("Initializing display...");
   display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS);
+
+  display.display();
+  delay(2000);
   display.clearDisplay();
+
+  display.setTextSize(1);
   display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0,0);
+  display.println(F("ETOTP!"));
+  display.display();
+  delay(2000);
 }
 
-bool anyExpectedFilesExist() {
-  return SD.exists(TIME_SYNC_LOG_FILE) || SD.exists(KEYS_FILE);
-}
+// bool anyExpectedFilesExist() {
+//   return SD.exists(TIME_SYNC_LOG_FILE) || SD.exists(KEYS_FILE);
+// }
 
-bool allExpectedFilesExist() {
-  printTextToDisplay("Checking filesystem...", 1);
-  return SD.exists(TIME_SYNC_LOG_FILE) && SD.exists(KEYS_FILE);
-}
+// void createNewFile(const String &fileName) {
+//   File file = SD.open(fileName, FILE_WRITE);
+//   if (file) {
+//     file.close();
+//     Serial.println("Created file: " + fileName);
+//   } else {
+//     Serial.println("Failed to create file: " + fileName);
+//     fatalError("Failed to create " + fileName);
+//   }
+// }
 
-void createNewFile(const String &fileName) {
-  File file = SD.open(fileName, FILE_WRITE);
-  if (file) {
-    file.close();
-    Serial.println("Created file: " + fileName);
-  } else {
-    Serial.println("Failed to create file: " + fileName);
-    fatalError("Failed to create " + fileName);
-  }
-}
+// /**
+//  * Reset the files on the SD card.
+//  */
+// void resetSDCard() {
+//   printTextToDisplay("Resetting SD card...", 1);
 
-/**
- * Reset the files on the SD card.
- */
-void resetSDCard() {
-  printTextToDisplay("Resetting SD card...", 1);
+//   // Remove all files on the SD card
+//   Serial.println("Removing all files from SD card...");
+//   SD.rmdir("/");
 
-  // Remove all files on the SD card
-  Serial.println("Removing all files from SD card...");
-  SD.rmdir("/");
+//   // If the formatting failed, error out
+//   if (anyExpectedFilesExist()) {
+//     fatalError("SD card is corrupt and insecure.");
+//   }
 
-  // If the formatting failed, error out
-  if (anyExpectedFilesExist()) {
-    fatalError("SD card is corrupt and insecure.");
-  }
+//   createNewFile(TIME_SYNC_LOG_FILE);
+//   createNewFile(KEYS_FILE);
 
-  createNewFile(TIME_SYNC_LOG_FILE);
-  createNewFile(KEYS_FILE);
+//   if (!allExpectedFilesExist()) {
+//     fatalError("SD card is corrupt and insecure.");
+//   }
 
-  if (!allExpectedFilesExist()) {
-    fatalError("SD card is corrupt and insecure.");
-  }
-
-  // Ask the user for the keys
-}
+//   // Ask the user for the keys
+// }
 
 void initSD() {
   Serial.println("Initializing SD card...");
@@ -104,7 +99,9 @@ void initSD() {
   if (!allExpectedFilesExist()) {
     // TODO: Unenroll fingerprints
     // If any of the expected files are missing, reset the SD card
-    resetSDCard();
+    // resetSDCard();
+
+    printTextToDisplay("TODO: reset card!", 1);
   }
 }
 
@@ -112,15 +109,32 @@ void setup() {
   // Initialize the USB serial communication
   Serial.begin(9600);
 
-  // Initialize the display
+  // Initialize the display with a splash screen
   initDisplay();
-
-  // Print a splash screen message
-  printTextToDisplay("ETOTP", 2);
 
   // Check that an SD card is present
   initSD();
 }
 
 void loop() {
+}
+
+void printTextToDisplay(const String &text, const int fontSize) {
+
+  display.clearDisplay();
+  display.setTextSize(fontSize);
+  display.setCursor(0, 0);
+  display.println(text);
+  display.display();
+  delay(2000);
+  Serial.println("Display: " + text);
+}
+
+/*
+ * SD Card Functions
+ */
+
+bool allExpectedFilesExist() {
+  printTextToDisplay("Checking filesystem...", 1);
+  return SD.exists(TIME_SYNC_LOG_FILE) && SD.exists(KEYS_FILE);
 }
